@@ -1,6 +1,41 @@
 #include <OpenCL/opencl.h>
 #include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "matrix_opencl.h"
+
+char* read_kernel_file(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        fprintf(stderr, "Failed to open kernel file: %s\n", filename);
+        exit(1);  // Properly exit if the file can't be opened
+    }
+
+    fseek(file, 0, SEEK_END);
+    size_t size = ftell(file);  // Get the file size
+    if (size == 0) {
+        fprintf(stderr, "Kernel file is empty: %s\n", filename);
+        exit(1);  // Exit if the file is empty
+    }
+
+    rewind(file);  // Go back to the start of the file
+
+    char* source = (char*)malloc(size + 1);  // Allocate memory for the source
+    if (!source) {
+        fprintf(stderr, "Failed to allocate memory for kernel source\n");
+        fclose(file);  // Close the file before exiting
+        exit(1);  // Properly handle memory allocation failure
+    }
+
+    // Read the file into memory
+    fread(source, sizeof(char), size, file);
+    source[size] = '\0';  // Null-terminate the kernel source
+
+    fclose(file);  // Close the file after reading
+
+    return source;
+}
+
 
 // Function to perform matrix addition using OpenCL
 double matrix_add_opencl(const float* A, const float* B, float* C, int size) {
@@ -13,11 +48,7 @@ double matrix_add_opencl(const float* A, const float* B, float* C, int size) {
     cl_mem d_A = NULL, d_B = NULL, d_C = NULL;
     cl_int err;
 
-    const char* kernelSource =
-        "__kernel void mat_add(__global const float* A, __global const float* B, __global float* C) {  \n"
-        "    int id = get_global_id(0); \n"
-        "    C[id] = A[id] + B[id]; \n"
-        "} \n";
+    const char* kernelSource = read_kernel_file("lib/kernels/matrix_add.cl");
 
     err = clGetPlatformIDs(1, &platform_id, NULL);
     err |= clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, NULL);
@@ -70,16 +101,7 @@ double matrix_multiply_opencl(const float* A, const float* B, float* C, int n) {
     cl_mem d_A = NULL, d_B = NULL, d_C = NULL;
     cl_int err;
 
-    const char* kernelSource =
-        "__kernel void mat_mul(__global const float* A, __global const float* B, __global float* C, int n) { \n"
-        "    int row = get_global_id(0); \n"
-        "    int col = get_global_id(1); \n"
-        "    float sum = 0; \n"
-        "    for (int k = 0; k < n; k++) { \n"
-        "        sum += A[row * n + k] * B[k * n + col]; \n"
-        "    } \n"
-        "    C[row * n + col] = sum; \n"
-        "} \n";
+    const char* kernelSource = read_kernel_file("lib/kernels/matrix_mul.cl");
 
     err = clGetPlatformIDs(1, &platform_id, NULL);
     err |= clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, NULL);

@@ -1,0 +1,6 @@
+{
+    "recommendations": [
+        "ms-vscode.cpptools", // C/C++ extension for Visual Studio Code
+        "ms-vscode.makefile-tools", // Makefile support for Visual Studio Code,
+    ]
+}

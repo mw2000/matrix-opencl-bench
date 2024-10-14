@@ -13,7 +13,7 @@ SRC = main.c $(LIBDIR)/matrix_cpu.c $(LIBDIR)/matrix_opencl.c
 OBJ = $(OBJDIR)/main.o $(OBJDIR)/matrix_cpu.o $(OBJDIR)/matrix_opencl.o
 
 # Target executable
-TARGET = $(BINDIR)/matmul
+TARGET = $(BINDIR)/matrix_opencl_bench
 
 # Create object and binary directories if they don't exist
 $(shell mkdir -p $(OBJDIR) $(BINDIR))
